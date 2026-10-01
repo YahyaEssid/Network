@@ -1,5 +1,17 @@
 {% extends "network/layout.html" %}
+{% load static %}
+
 
 {% block body %}
-    TODO
+    {% if user.is_authenticated %}
+        <form id ="create_post">
+            <h3>New Post</h3>
+            <textarea id="post" placeholder="What's on your mind?"></textarea>
+            <button type = "submit">POST</button>
+        </form>
+    {% endif %}
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'network/index.js' %}"></script>
 {% endblock %}
