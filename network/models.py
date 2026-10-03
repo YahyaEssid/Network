@@ -7,4 +7,4 @@ class User(AbstractUser):
 
 class Post(models.Model):
     content = models.CharField(max_length = 350)
-    User = models.ForeignKey(User, on_delete = models.SET_NULL, null=True)
+    user = models.ForeignKey(User, on_delete = models.SET_NULL, null=True)
