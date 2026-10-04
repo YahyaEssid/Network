@@ -8,3 +8,16 @@ class User(AbstractUser):
 class Post(models.Model):
     content = models.CharField(max_length = 350)
     user = models.ForeignKey(User, on_delete = models.SET_NULL, null=True)
+    timestamp = models.DateTimeField(auto_now_add = True)
+    likes = models.PositiveIntegerField(default = 0)
+
+    def serialize(self):
+        return{
+            "id" : self.id,
+            "content" : self.content,
+            "username" : self.user.get_username(),
+            "timestamp": self.timestamp.strftime("%b %d %Y, %I:%M %p"),
+            "likes" : self.likes 
+        }
+
+    

@@ -5,11 +5,15 @@
 {% block body %}
     {% if user.is_authenticated %}
         <form id ="create_post">
+            {% csrf_token %}
             <h3>New Post</h3>
             <textarea id="post_content" placeholder="What's on your mind?"></textarea>
             <button type = "submit">POST</button>
         </form>
     {% endif %}
+    <div id ="all_posts">
+            
+        </div>
 {% endblock %}
 
 {% block script %}

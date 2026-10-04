@@ -6,6 +6,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from network.models import *
+from django.contrib.auth.decorators import login_required
 
 from .models import User
 
@@ -65,10 +66,24 @@ def register(request):
     else:
         return render(request, "network/register.html")
 
-
+@csrf_exempt
+@login_required
 def createPost(request) :
     if request.method != "POST":
         return JsonResponse({"error" : "POST request required."}, status = 400)
-    data = json.loads(request.body)#convert request.body from a json string to a python dictionaire
-    post = Post(content = data.get("content"), user = request.User)
+    data = json.loads(request.body)#convert request.body from a json string to a python dictionairy
+    content = data.get("content", "").strip()
+    if not content:
+        return JsonResponse({"message": "Post can't be empty"}, status=  400 );
+    
+    post = Post(content = content, user = request.user)
     post.save()
+    return JsonResponse({"message": "Post is created successfully."}, status=201)
+
+
+
+def viewPosts(request):
+    if request.method != "GET":
+        return JsonResponse({"error": "GET Request required."}, status=400)
+    posts= Post.objects.all().order_by("-timestamp")
+    return JsonResponse([post.serialize() for post in posts], safe=False)
