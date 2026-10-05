@@ -18,6 +18,10 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (event.target.id === 'folowing') {
             show_folowing();
         }
+
+       else if (event.target.id === "follow_btn") {
+            toggle_follow(event.target.dataset.username);
+        }
         
     });
 
@@ -94,29 +98,59 @@ function show_folowing(){
 }
 
 
-function show_profile(username){
+function show_profile(username) {
     document.querySelector("#create_post").style.display = 'none';
     document.querySelector("#all_posts").style.display = 'none';
     document.querySelector("#Profile").style.display = 'block';
     document.querySelector("#Profile").innerHTML = '';
+
     fetch(`/profile/${username}`)
-    .then(response => response.json())
-    .then(result => 
-    {
-        console.log(result);
-        const div = document.createElement("div");
-        div.innerHTML = `<strong class="profile_user">${username}</strong>
-        <br>
-        <p>folowwing : ${result.following}</p>
-        <br>
-        <p>followers : ${result.followers}</p>`
-        document.querySelector("#Profile").append(div)
-        
+        .then(response => response.json())
+        .then(result => {
+            const buttonText = result.is_following ? "Unfollow" : "Follow";
+            
+            // Only render follow button if viewing someone else's profile
+            const followButtonHTML = result.is_self ? '' : `<button id="follow_btn" data-username="${username}">${buttonText}</button>`;
+
+            const div = document.createElement("div");
+            div.innerHTML = `
+                <strong class="profile_user">${result.username}</strong>
+                <br>
+                <p>following: <span id="following_count">${result.following}</span></p>
+                <p>followers: <span id="followers_count">${result.followers}</span></p>
+                ${followButtonHTML}
+            `;
+
+            document.querySelector("#Profile").append(div);
+        });
+
+    // Don't forget to load the posts for this user profile!
+    load_all_posts(username);
+}
+
+function is_following(username){
+    fetch(`is_following/${username}`,{
+        method : "GET"
     })
+    .then(response => response.json())
+    .then(result =>
+    {
+        console.log(result)
+        return result.get("is_following");
+    }
+    )
 }
 
-function follow(username){
-    
+function toggle_follow(username) {
+    fetch(`/follow/${username}`, {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) return;
+        const followBtn = document.querySelector("#follow_btn");
+        followBtn.textContent = data.is_following ? "Unfollow" : "Follow";
+        document.querySelector("#followers_count").textContent = data.followers_count;
+    });
 }
-
 

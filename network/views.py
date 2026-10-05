@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from network.models import *
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
 
 from .models import User
 
@@ -94,22 +95,38 @@ def viewPosts(request, feed_type):
     return JsonResponse([post.serialize() for post in posts], safe=False)
 
 @login_required
-def viewProfile(request, username):
+def view_profile(request, username):
     if request.method != "GET":
-        return JsonResponse({"error": "GET Request required."}, status=400)
-    try:
-        user = User.objects.get(username=username)
-    except User.DoesNotExist:
-        return JsonResponse({"error": "User not found."}, status=404)
-    following = user.following.count()
-    followers = user.followers.count()
-    return JsonResponse({"followers" : followers, "following" : following })
+        return JsonResponse({"error": "GET request required."}, status=405)
+
+    target_user = get_object_or_404(User, username=username)
+
+    # Check if logged-in user follows target user
+    is_following = request.user.following.filter(username=username).exists()
+
+    return JsonResponse({
+        "username": target_user.username,
+        "following": target_user.following.count(),
+        "followers": target_user.followers.count(),
+        "is_following": is_following,
+        "is_self": request.user == target_user  # Helper to hide button on own profile
+    })
 
 @csrf_exempt
 @login_required
 def follow(request, username):
-    if request.method != "PUT":
-        JsonResponse("error : PUT request required")
-    else :
-        pass
-        
+        if request.method != "POST":
+            return JsonResponse({"error": "POST request required."}, status=405)
+        target_user = get_object_or_404(User, username=username)
+        if target_user == request.user:
+            return JsonResponse({"error": "You cannot follow yourself."}, status=400)
+        if request.user.following.filter(username=username).exists():
+            request.user.following.remove(target_user)
+            is_following = False
+        else:
+            request.user.following.add(target_user)
+            is_following = True
+        return JsonResponse({
+        "is_following": is_following,
+        "followers_count": target_user.followers.count()
+    })

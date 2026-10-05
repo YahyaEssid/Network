@@ -5,7 +5,7 @@ from . import views
 
 urlpatterns = [
     path("", views.index, name="index"),
-    path("profile/<str:username>", views.viewProfile, name = "profile"),
+    path("profile/<str:username>", views.view_profile, name = "profile"),
     path("create", views.createPost, name="create"),
     path("follow/<str:username>", views.follow, name="follow"),
     path("view/<str:feed_type>", views.viewPosts, name="view"),
