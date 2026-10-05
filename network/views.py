@@ -82,8 +82,34 @@ def createPost(request) :
 
 
 
-def viewPosts(request):
+def viewPosts(request, feed_type):
     if request.method != "GET":
         return JsonResponse({"error": "GET Request required."}, status=400)
-    posts= Post.objects.all().order_by("-timestamp")
+    if feed_type == "all":
+        posts= Post.objects.all().order_by("-timestamp")
+    elif feed_type == "following":
+        posts = Post.objects.filter(user__in = request.user.following.all())
+    else :
+        posts = Post.objects.filter(user__username=feed_type).order_by("-timestamp")
     return JsonResponse([post.serialize() for post in posts], safe=False)
+
+@login_required
+def viewProfile(request, username):
+    if request.method != "GET":
+        return JsonResponse({"error": "GET Request required."}, status=400)
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return JsonResponse({"error": "User not found."}, status=404)
+    following = user.following.count()
+    followers = user.followers.count()
+    return JsonResponse({"followers" : followers, "following" : following })
+
+@csrf_exempt
+@login_required
+def follow(request, username):
+    if request.method != "PUT":
+        JsonResponse("error : PUT request required")
+    else :
+        pass
+        

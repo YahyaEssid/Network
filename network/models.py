@@ -3,7 +3,11 @@ from django.db import models
 
 
 class User(AbstractUser):
-    pass
+    following = models.ManyToManyField('self',
+        symmetrical=False,
+        related_name = 'followers',
+        blank = True
+        )
 
 class Post(models.Model):
     content = models.CharField(max_length = 350)
@@ -20,4 +24,3 @@ class Post(models.Model):
             "likes" : self.likes 
         }
 
-    

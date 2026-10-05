@@ -5,8 +5,10 @@ from . import views
 
 urlpatterns = [
     path("", views.index, name="index"),
+    path("profile/<str:username>", views.viewProfile, name = "profile"),
     path("create", views.createPost, name="create"),
-    path("view", views.viewPosts, name="view"),
+    path("follow/<str:username>", views.follow, name="follow"),
+    path("view/<str:feed_type>", views.viewPosts, name="view"),
     path("login", views.login_view, name="login"),
     path("logout", views.logout_view, name="logout"),
     path("register", views.register, name="register")
