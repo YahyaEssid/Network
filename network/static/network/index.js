@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(event) {
         
         // Handle clicking any username (in posts or profile header)
-        if (event.target.classList.contains('profile_user') || event.target.id === 'username') {
-            show_profile(event.target.textContent);
+        if (event.target.classList.contains('profile_user')) {
+            show_profile(event.target.textContent.trim());
             load_all_posts(event.target.textContent);
         }
         
@@ -41,7 +41,7 @@ function load_all_posts(condition){
         document.querySelector("#all_posts").style.display = 'block';
         document.querySelector("#create_post").style.display = 'block';
     }
-    else if (condition == "folowing"){
+    else if (condition == "following"){
         document.querySelector("#Profile").style.display = 'none';
         document.querySelector("#all_posts").style.display = 'block';
         document.querySelector("#create_post").style.display = 'none';
@@ -92,9 +92,7 @@ function create_post(){
 
 
 function show_folowing(){
-    document.querySelector("#create_post").style.display = 'none';
-    document.querySelector("#all_posts").style.display = 'none';
-    document.querySelector("#Profile").style.display = 'none';
+    load_all_posts("following")
 }
 
 
