@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from network.models import *
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.paginator import Paginator
 
 from .models import User
 
@@ -140,3 +140,17 @@ def follow(request, username):
         "is_following": is_following,
         "followers_count": target_user.followers.count()
     })
+
+
+@csrf_exempt
+@login_required
+def editPost(request, post_id):
+    if (request.method != "PUT"):
+        return JsonResponse({"error": "PUT request required."}, status=405)
+    post = get_object_or_404(Post, pk=post_id)
+    if (post.user != request.user):
+        return JsonResponse({"error":"Forbiden action: User isn't owner of post"}, status= 403)
+    new_content = json.loads(request.body).get("content")
+    post.content = new_content
+    post.save()
+    return JsonResponse({"message": "Post is edited successfully."})

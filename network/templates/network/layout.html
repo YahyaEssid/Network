@@ -49,3 +49,9 @@
         </div>
     </body>
 </html>
+
+<script>
+    const currentUser = "{{ user.is_authenticated|yesno:'true,false' }}" === "true" 
+        ? "{{ user.username }}" 
+        : null;
+</script>

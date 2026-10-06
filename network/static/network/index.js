@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    // 1. Single Global Click Listener (Handles all navigation & dynamic links)
+    // Single Global Click Listener (Handles all navigation & dynamic links)
     document.addEventListener('click', function(event) {
         
         // Handle clicking any username (in posts or profile header)
@@ -33,19 +33,47 @@ document.addEventListener('DOMContentLoaded', function() {
                 load_all_posts(feed_type, page + 1) 
             }
        }
+
+    else if (event.target.classList.contains("editButton")) {
+    const editButton = event.target;
+    const parentDiv = editButton.closest(".post-card");
+    const postID = parentDiv.dataset.id;
+    const oldPostContent = parentDiv.querySelector("p");
+    oldPostContent.style.display = "none";
+    editButton.style.display = "none";
+    const textarea = document.createElement("textarea");
+    textarea.value = oldPostContent.textContent;
+    const saveButton = document.createElement("button");
+    saveButton.textContent = "Save";
+    parentDiv.append(textarea);
+    parentDiv.append(saveButton);
+    saveButton.addEventListener("click", () => {
+        const newContent = textarea.value;
+        edit_post(postID, newContent)
+        //asynchronous very important 
+            .then(data => {
+                console.log(data);
+                oldPostContent.textContent = newContent;
+                oldPostContent.style.display = "block";
+                editButton.style.display = "inline-block";
+                textarea.remove();
+                saveButton.remove();
+            })
+    });
+}
     });
 
-    // 2. Form Submit Listener for Creating Posts
     document.querySelector('#create_post').addEventListener('submit', function(event) {
         event.preventDefault();
         create_post();
     });
 
-    // 3. Initial Load
+    //Initial Load
     load_all_posts("all", 1);
 });
 
 function load_all_posts(feed_type, page){
+    isUsername = false
     if (feed_type == "all"){
         document.querySelector("#Profile").style.display = 'none';
         document.querySelector("#all_posts").style.display = 'block';
@@ -60,6 +88,7 @@ function load_all_posts(feed_type, page){
         document.querySelector("#Profile").style.display = 'block';
         document.querySelector("#all_posts").style.display = 'block';
         document.querySelector("#create_post").style.display = 'none';
+        isUsername = true
     }
     document.querySelector("#all_posts").innerHTML ='';
     fetch(`/view/${feed_type}?page=${page}`, {
@@ -69,6 +98,8 @@ function load_all_posts(feed_type, page){
         console.log(data);
         data.posts.forEach(post => {
             const div = document.createElement("div");
+            div.classList.add("post-card")
+            div.dataset.id = post.id;
             div.innerHTML = `<strong class="profile_user">${post.username}</strong>
             <br>
             <p>${post.content}</p>
@@ -77,6 +108,12 @@ function load_all_posts(feed_type, page){
             <p>${post.likes}</p>
             </div>`
             document.querySelector("#all_posts").append(div);  
+            if (isUsername &&  post.username === currentUser){
+                const editButton = document.createElement("button")
+                editButton.textContent = "Edit"
+                editButton.classList.add("editButton")
+                div.append(editButton)
+            }
         })
        if (data.has_previous) {
                 const prevBtn = document.createElement("button");
@@ -95,6 +132,8 @@ function load_all_posts(feed_type, page){
                 nextBtn.dataset.feed_type = feed_type;
                 document.querySelector("#all_posts").append(nextBtn);
             }
+
+
     })
 }
 function create_post(){
@@ -174,5 +213,18 @@ function toggle_follow(username) {
         followBtn.textContent = data.is_following ? "Unfollow" : "Follow";
         document.querySelector("#followers_count").textContent = data.followers_count;
     });
+}
+
+function edit_post(postId, content){
+    return fetch(`/edit/${postId}`,{
+        method : "PUT",
+        body : JSON.stringify({
+            content : content
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data)
+    })
 }
 
