@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from network.models import *
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import User
 
@@ -89,10 +90,19 @@ def viewPosts(request, feed_type):
     if feed_type == "all":
         posts= Post.objects.all().order_by("-timestamp")
     elif feed_type == "following":
-        posts = Post.objects.filter(user__in = request.user.following.all())
+        posts = Post.objects.filter(user__in = request.user.following.all()).order_by("-timestamp")
     else :
         posts = Post.objects.filter(user__username=feed_type).order_by("-timestamp")
-    return JsonResponse([post.serialize() for post in posts], safe=False)
+    p = Paginator(posts, 10)
+    page_number = request.GET.get('page')
+    page_obj = p.get_page(page_number)
+    return JsonResponse({
+        "posts": [post.serialize() for post in page_obj],
+        "has_next": page_obj.has_next(),
+        "has_previous": page_obj.has_previous(),
+        "page_number": page_obj.number,
+        "num_pages": p.num_pages
+    })
 
 @login_required
 def view_profile(request, username):

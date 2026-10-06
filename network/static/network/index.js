@@ -6,12 +6,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Handle clicking any username (in posts or profile header)
         if (event.target.classList.contains('profile_user')) {
             show_profile(event.target.textContent.trim());
-            load_all_posts(event.target.textContent);
+            load_all_posts(event.target.textContent, 1);
         }
         
         // Handle clicking "All Posts" navigation button
         else if (event.target.id === 'allPosts') {
-            load_all_posts("all");
+            load_all_posts("all", 1);
         }
         
         // Handle clicking "Following" navigation button
@@ -23,6 +23,16 @@ document.addEventListener('DOMContentLoaded', function() {
             toggle_follow(event.target.dataset.username);
         }
         
+       else if (event.target.classList.contains("pagination")){
+            page = parseInt(event.target.dataset.page)
+            feed_type = event.target.dataset.feed_type 
+            if (event.target.classList.contains("paginationPrev")){
+                load_all_posts(feed_type, page - 1)
+            } 
+            else if (event.target.classList.contains("paginationNex")){
+                load_all_posts(feed_type, page + 1) 
+            }
+       }
     });
 
     // 2. Form Submit Listener for Creating Posts
@@ -32,16 +42,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 3. Initial Load
-    load_all_posts("all");
+    load_all_posts("all", 1);
 });
 
-function load_all_posts(condition){
-    if (condition == "all"){
+function load_all_posts(feed_type, page){
+    if (feed_type == "all"){
         document.querySelector("#Profile").style.display = 'none';
         document.querySelector("#all_posts").style.display = 'block';
         document.querySelector("#create_post").style.display = 'block';
     }
-    else if (condition == "following"){
+    else if (feed_type == "following"){
         document.querySelector("#Profile").style.display = 'none';
         document.querySelector("#all_posts").style.display = 'block';
         document.querySelector("#create_post").style.display = 'none';
@@ -52,12 +62,12 @@ function load_all_posts(condition){
         document.querySelector("#create_post").style.display = 'none';
     }
     document.querySelector("#all_posts").innerHTML ='';
-    fetch(`/view/${condition}`, {
+    fetch(`/view/${feed_type}?page=${page}`, {
         method : 'GET',
     }).then(response => response.json())
-    .then(posts => {
-        console.log("posts");
-        posts.forEach(post => {
+    .then(data => {
+        console.log(data);
+        data.posts.forEach(post => {
             const div = document.createElement("div");
             div.innerHTML = `<strong class="profile_user">${post.username}</strong>
             <br>
@@ -66,10 +76,25 @@ function load_all_posts(condition){
             <time>${post.timestamp}</time>
             <p>${post.likes}</p>
             </div>`
-            document.querySelector("#all_posts").append(div);
-            
+            document.querySelector("#all_posts").append(div);  
         })
-       
+       if (data.has_previous) {
+                const prevBtn = document.createElement("button");
+                prevBtn.innerHTML = "Previous";
+                prevBtn.classList.add("pagination", "paginationPrev");
+                prevBtn.dataset.page = page;
+                prevBtn.dataset.feed_type = feed_type;
+                document.querySelector("#all_posts").append(prevBtn);
+            }
+
+            if (data.has_next) {
+                const nextBtn = document.createElement("button");
+                nextBtn.innerHTML = "Next";
+                nextBtn.classList.add("pagination", "paginationNex");
+                nextBtn.dataset.page = page;
+                nextBtn.dataset.feed_type = feed_type;
+                document.querySelector("#all_posts").append(nextBtn);
+            }
     })
 }
 function create_post(){
@@ -85,14 +110,14 @@ function create_post(){
     }).then(response => response.json())
     .then(result => {
         console.log(result)
-        load_all_posts("all")
+        load_all_posts("all", 1)
     })
     
 }
 
 
 function show_folowing(){
-    load_all_posts("following")
+    load_all_posts("following",1)
 }
 
 
@@ -122,8 +147,7 @@ function show_profile(username) {
             document.querySelector("#Profile").append(div);
         });
 
-    // Don't forget to load the posts for this user profile!
-    load_all_posts(username);
+    load_all_posts(username,1);
 }
 
 function is_following(username){
