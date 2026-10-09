@@ -34,43 +34,66 @@ document.addEventListener('DOMContentLoaded', function() {
             }
        }
 
-    else if (event.target.classList.contains("editButton")) {
-    const editButton = event.target;
-    const parentDiv = editButton.closest(".post-card");
-    const postID = parentDiv.dataset.id;
-    const oldPostContent = parentDiv.querySelector("p");
-    oldPostContent.style.display = "none";
-    editButton.style.display = "none";
-    const textarea = document.createElement("textarea");
-    textarea.value = oldPostContent.textContent;
-    const saveButton = document.createElement("button");
-    saveButton.textContent = "Save";
-    parentDiv.append(textarea);
-    parentDiv.append(saveButton);
-    saveButton.addEventListener("click", () => {
-        const newContent = textarea.value;
-        edit_post(postID, newContent)
-        //asynchronous very important 
-            .then(data => {
-                console.log(data);
-                oldPostContent.textContent = newContent;
-                oldPostContent.style.display = "block";
-                editButton.style.display = "inline-block";
-                textarea.remove();
-                saveButton.remove();
-            })
-    });
-}
-    });
+        else if (event.target.classList.contains("editButton")) {
+            const editButton = event.target;
+            const parentDiv = editButton.closest(".post-card");
+            const postID = parentDiv.dataset.id;
+            const oldPostContent = parentDiv.querySelector("p");
+            oldPostContent.style.display = "none";
+            editButton.style.display = "none";
+            const textarea = document.createElement("textarea");
+            textarea.value = oldPostContent.textContent;
+            const saveButton = document.createElement("button");
+            saveButton.textContent = "Save";
+            parentDiv.append(textarea);
+            parentDiv.append(saveButton);
+            saveButton.addEventListener("click", () => {
+                const newContent = textarea.value;
+                edit_post(postID, newContent)
+                //asynchronous very important 
+                    .then(data => {
+                        console.log(data);
+                        oldPostContent.textContent = newContent;
+                        oldPostContent.style.display = "block";
+                        editButton.style.display = "inline-block";
+                        textarea.remove();
+                        saveButton.remove();
+                    })
+            });
+        }
 
-    document.querySelector('#create_post').addEventListener('submit', function(event) {
+        else if (event.target.classList.contains("react")) {
+        const parentDiv = event.target.closest(".post-card");
+        const post_id = parentDiv.dataset.id;
+
+        if (event.target.dataset.id === "like_button") {
+            react(post_id, "LIKE")
+                .then(data => {
+                    console.log(data);
+                    // Update BOTH counts in case user switched from Dislike to Like
+                    parentDiv.querySelector(".like_count").textContent = data.likes_count;
+                    parentDiv.querySelector(".dislike_count").textContent = data.dislikes_count;
+                })
+                .catch(error => console.error(error));
+        }
+        else if (event.target.dataset.id === "dislike_button") {
+            react(post_id, "DISLIKE")
+                .then(data => {
+                    console.log(data);
+                    parentDiv.querySelector(".like_count").textContent = data.likes_count;
+                    parentDiv.querySelector(".dislike_count").textContent = data.dislikes_count;
+                })
+                .catch(error => console.error(error));
+        }}
+    })
+    load_all_posts("all", 1);
+     document.querySelector('#create_post').addEventListener('submit', function(event) {
         event.preventDefault();
         create_post();
     });
-
-    //Initial Load
-    load_all_posts("all", 1);
 });
+
+
 
 function load_all_posts(feed_type, page){
     isUsername = false
@@ -105,7 +128,10 @@ function load_all_posts(feed_type, page){
             <p>${post.content}</p>
             <div>
             <time>${post.timestamp}</time>
-            <p>${post.likes}</p>
+            <p>likes: <span class="like_count">${post.likes}</span></p>
+            <p>dislikes: <span class="dislike_count">${post.dislikes}</span></p>
+            <button class="react" data-id="like_button">like</button>
+            <button class="react" data-id="dislike_button">dislike</button>
             </div>`
             document.querySelector("#all_posts").append(div);  
             if (isUsername &&  post.username === currentUser){
@@ -228,3 +254,17 @@ function edit_post(postId, content){
     })
 }
 
+function react(post_id, reaction) {
+    return fetch(`/posts/${post_id}/react`, {
+        method: "PUT",
+        body: JSON.stringify({
+            reaction: reaction
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Failed to register reaction.");
+        }
+        return response.json();
+    });
+}

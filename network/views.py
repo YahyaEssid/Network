@@ -154,3 +154,35 @@ def editPost(request, post_id):
     post.content = new_content
     post.save()
     return JsonResponse({"message": "Post is edited successfully."})
+
+
+@csrf_exempt
+@login_required
+def react(request, post_id):
+    if request.method != "PUT":
+        return JsonResponse("error: PURrequest required")
+    post = get_object_or_404(Post, pk=post_id)
+    new_reaction_type = json.loads(request.body).get("reaction")
+    existing_reaction = Reaction.objects.filter(user=request.user, post=post).first()
+    if existing_reaction:
+        if existing_reaction.reaction_type == new_reaction_type:
+            existing_reaction.delete()
+            message = "Reaction removed"
+        else:
+            existing_reaction.reaction_type = new_reaction_type
+            existing_reaction.save()
+            message = f"Reaction changed to {new_reaction_type}"
+    else:
+        Reaction.objects.create(
+            user=request.user,
+            post=post,
+            reaction_type=new_reaction_type
+        )
+        message = f"Post {new_reaction_type.lower()}d successfully"
+    likes_count = Reaction.objects.filter(post=post, reaction_type="LIKE").count()
+    dislikes_count = Reaction.objects.filter(post=post, reaction_type="DISLIKE").count()
+    return JsonResponse({
+        "message": message,
+        "likes_count": likes_count,
+        "dislikes_count": dislikes_count
+    }, status=200)
