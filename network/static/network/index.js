@@ -87,30 +87,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }}
     })
     load_all_posts("all", 1);
-     document.querySelector('#create_post').addEventListener('submit', function(event) {
-        event.preventDefault();
-        create_post();
-    });
+    const createForm = document.querySelector('#create_post');
+    if (createForm) {
+        createForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            create_post();
+        });
+    }
 });
 
 
 
+function setDisplay(selector, display) {
+    const el = document.querySelector(selector);
+    if (el) {
+        el.style.display = display;
+    }
+}
+
 function load_all_posts(feed_type, page){
     isUsername = false
     if (feed_type == "all"){
-        document.querySelector("#Profile").style.display = 'none';
-        document.querySelector("#all_posts").style.display = 'block';
-        document.querySelector("#create_post").style.display = 'block';
+        setDisplay("#Profile", 'none');
+        setDisplay("#all_posts", 'block');
+        setDisplay("#create_post", 'block');
     }
     else if (feed_type == "following"){
-        document.querySelector("#Profile").style.display = 'none';
-        document.querySelector("#all_posts").style.display = 'block';
-        document.querySelector("#create_post").style.display = 'none';
+        setDisplay("#Profile", 'none');
+        setDisplay("#all_posts", 'block');
+        setDisplay("#create_post", 'none');
     }
     else {
-        document.querySelector("#Profile").style.display = 'block';
-        document.querySelector("#all_posts").style.display = 'block';
-        document.querySelector("#create_post").style.display = 'none';
+        setDisplay("#Profile", 'block');
+        setDisplay("#all_posts", 'block');
+        setDisplay("#create_post", 'none');
         isUsername = true
     }
     document.querySelector("#all_posts").innerHTML ='';
@@ -187,9 +197,9 @@ function show_folowing(){
 
 
 function show_profile(username) {
-    document.querySelector("#create_post").style.display = 'none';
-    document.querySelector("#all_posts").style.display = 'none';
-    document.querySelector("#Profile").style.display = 'block';
+    setDisplay("#create_post", 'none');
+    setDisplay("#all_posts", 'none');
+    setDisplay("#Profile", 'block');
     document.querySelector("#Profile").innerHTML = '';
 
     fetch(`/profile/${username}`)
