@@ -63,6 +63,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         else if (event.target.classList.contains("react")) {
+        if (!currentUser) {
+            alert("Please log in or register to like or dislike posts.");
+            return;
+        }
         const parentDiv = event.target.closest(".post-card");
         const post_id = parentDiv.dataset.id;
 
@@ -184,7 +188,7 @@ function create_post(){
         })
     }).then(response => response.json())
     .then(result => {
-        console.log(result)
+        document.querySelector('#post_content').value =''
         load_all_posts("all", 1)
     })
     
