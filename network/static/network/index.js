@@ -42,8 +42,11 @@ document.addEventListener('DOMContentLoaded', function() {
             oldPostContent.style.display = "none";
             editButton.style.display = "none";
             const textarea = document.createElement("textarea");
+            textarea.className = "form-control my-2";
+            textarea.rows = 3;
             textarea.value = oldPostContent.textContent;
             const saveButton = document.createElement("button");
+            saveButton.className = "btn btn-sm btn-primary mb-2";
             saveButton.textContent = "Save";
             parentDiv.append(textarea);
             parentDiv.append(saveButton);
@@ -135,42 +138,51 @@ function load_all_posts(feed_type, page){
         console.log(data);
         data.posts.forEach(post => {
             const div = document.createElement("div");
-            div.classList.add("post-card")
+            div.classList.add("post-card", "card", "mb-3")
             div.dataset.id = post.id;
-            div.innerHTML = `<strong class="profile_user">${post.username}</strong>
-            <br>
-            <p>${post.content}</p>
-            <div>
-            <time>${post.timestamp}</time>
-            <p>likes: <span class="like_count">${post.likes}</span></p>
-            <p>dislikes: <span class="dislike_count">${post.dislikes}</span></p>
-            <button class="react" data-id="like_button">like</button>
-            <button class="react" data-id="dislike_button">dislike</button>
+            div.innerHTML = `<div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+            <strong class="profile_user text-primary">${post.username}</strong>
+            <time class="text-muted small">${post.timestamp}</time>
+            </div>
+            <p class="mb-3">${post.content}</p>
+            <div class="d-flex align-items-center flex-wrap">
+            <button class="react btn btn-sm btn-outline-primary mr-2" data-id="like_button">Like</button>
+            <span class="text-muted small mr-3">likes: <span class="like_count">${post.likes}</span></span>
+            <button class="react btn btn-sm btn-outline-secondary mr-2" data-id="dislike_button">Dislike</button>
+            <span class="text-muted small">dislikes: <span class="dislike_count">${post.dislikes}</span></span>
+            </div>
             </div>`
             document.querySelector("#all_posts").append(div);  
             if (isUsername &&  post.username === currentUser){
                 const editButton = document.createElement("button")
                 editButton.textContent = "Edit"
-                editButton.classList.add("editButton")
-                div.append(editButton)
+                editButton.classList.add("editButton", "btn", "btn-sm", "btn-outline-secondary", "mt-3")
+                div.querySelector(".card-body").append(editButton)
             }
         })
-       if (data.has_previous) {
-                const prevBtn = document.createElement("button");
-                prevBtn.innerHTML = "Previous";
-                prevBtn.classList.add("pagination", "paginationPrev");
-                prevBtn.dataset.page = page;
-                prevBtn.dataset.feed_type = feed_type;
-                document.querySelector("#all_posts").append(prevBtn);
-            }
-
-            if (data.has_next) {
-                const nextBtn = document.createElement("button");
-                nextBtn.innerHTML = "Next";
-                nextBtn.classList.add("pagination", "paginationNex");
-                nextBtn.dataset.page = page;
-                nextBtn.dataset.feed_type = feed_type;
-                document.querySelector("#all_posts").append(nextBtn);
+       if (data.has_previous || data.has_next) {
+                const pager = document.createElement("div");
+                pager.className = "d-flex justify-content-between mt-3";
+                if (data.has_previous) {
+                    const prevBtn = document.createElement("button");
+                    prevBtn.innerHTML = "Previous";
+                    prevBtn.classList.add("pagination", "paginationPrev", "btn", "btn-outline-secondary");
+                    prevBtn.dataset.page = page;
+                    prevBtn.dataset.feed_type = feed_type;
+                    pager.append(prevBtn);
+                } else {
+                    pager.append(document.createElement("span"));
+                }
+                if (data.has_next) {
+                    const nextBtn = document.createElement("button");
+                    nextBtn.innerHTML = "Next";
+                    nextBtn.classList.add("pagination", "paginationNex", "btn", "btn-outline-secondary");
+                    nextBtn.dataset.page = page;
+                    nextBtn.dataset.feed_type = feed_type;
+                    pager.append(nextBtn);
+                }
+                document.querySelector("#all_posts").append(pager);
             }
 
 
@@ -212,15 +224,18 @@ function show_profile(username) {
             const buttonText = result.is_following ? "Unfollow" : "Follow";
             
             // Only render follow button if viewing someone else's profile
-            const followButtonHTML = result.is_self ? '' : `<button id="follow_btn" data-username="${username}">${buttonText}</button>`;
+            const followButtonHTML = result.is_self ? '' : `<button id="follow_btn" class="btn btn-primary" data-username="${username}">${buttonText}</button>`;
 
             const div = document.createElement("div");
+            div.className = "card shadow-sm";
             div.innerHTML = `
-                <strong class="profile_user">${result.username}</strong>
-                <br>
-                <p>following: <span id="following_count">${result.following}</span></p>
-                <p>followers: <span id="followers_count">${result.followers}</span></p>
-                ${followButtonHTML}
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <strong class="profile_user h5 mb-2 d-inline-block text-primary">${result.username}</strong>
+                        <p class="text-muted mb-0">following: <span id="following_count">${result.following}</span> · followers: <span id="followers_count">${result.followers}</span></p>
+                    </div>
+                    ${followButtonHTML}
+                </div>
             `;
 
             document.querySelector("#Profile").append(div);
