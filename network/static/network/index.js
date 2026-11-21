@@ -1,6 +1,18 @@
 document.addEventListener('DOMContentLoaded', function() {
+    
+    // Handle clicking "All Posts" navigation button
+    const allPostsLink = document.querySelector('#allPosts');
+    // Replace '#posts-view' with whatever ID your main posts container has in index.html
+    const postsContainer = document.querySelector('#posts-view'); 
 
-    // Single Global Click Listener (Handles all navigation & dynamic links)
+        if (allPostsLink && postsContainer) {
+            allPostsLink.addEventListener('click', function(event) {
+                event.preventDefault();
+                load_posts('all'); // your existing function
+        });
+    }
+
+    // Single Global Click Listener (Handles all other navigation & dynamic links)
     document.addEventListener('click', function(event) {
         
         // Handle clicking any username (in posts or profile header)
@@ -9,10 +21,6 @@ document.addEventListener('DOMContentLoaded', function() {
             load_all_posts(event.target.textContent, 1);
         }
         
-        // Handle clicking "All Posts" navigation button
-        else if (event.target.id === 'allPosts') {
-            load_all_posts("all", 1);
-        }
         
         // Handle clicking "Following" navigation button
         else if (event.target.id === 'folowing') {
@@ -161,6 +169,7 @@ function load_all_posts(feed_type, page){
                 div.querySelector(".card-body").append(editButton)
             }
         })
+        //adding pagination
        if (data.has_previous || data.has_next) {
                 const pager = document.createElement("div");
                 pager.className = "d-flex justify-content-between mt-3";

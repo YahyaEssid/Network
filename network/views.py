@@ -159,30 +159,51 @@ def editPost(request, post_id):
 @csrf_exempt
 @login_required
 def react(request, post_id):
+    #throw an error if not PUT request
     if request.method != "PUT":
-        return JsonResponse("error: PURrequest required")
+        return JsonResponse({"error": "PUT request required."}, status=405)
+
+    try:
+        payload = json.loads(request.body or b"{}")
+    except json.JSONDecodeError:#check valid JSON 
+        return JsonResponse({"error": "Invalid JSON."}, status=400)
+
+    new_reaction_type = str(payload.get("reaction", "")).strip().upper()
+    valid_reactions = {code for code, _label in Reaction.REACTION_CHOICES}
+    if new_reaction_type not in valid_reactions:
+        return JsonResponse({"error": "Reaction must be LIKE or DISLIKE."}, status=400)
+
     post = get_object_or_404(Post, pk=post_id)
-    new_reaction_type = json.loads(request.body).get("reaction")
     existing_reaction = Reaction.objects.filter(user=request.user, post=post).first()
-    if existing_reaction:
-        if existing_reaction.reaction_type == new_reaction_type:
-            existing_reaction.delete()
-            message = "Reaction removed"
-        else:
-            existing_reaction.reaction_type = new_reaction_type
-            existing_reaction.save()
-            message = f"Reaction changed to {new_reaction_type}"
+
+    if existing_reaction and existing_reaction.reaction_type == new_reaction_type:
+        existing_reaction.delete()
+        message = "Reaction removed"
+    elif existing_reaction:
+        existing_reaction.reaction_type = new_reaction_type
+        existing_reaction.save(update_fields=["reaction_type"])
+        message = f"Reaction changed to {new_reaction_type}"
     else:
-        Reaction.objects.create(
-            user=request.user,
-            post=post,
-            reaction_type=new_reaction_type
-        )
-        message = f"Post {new_reaction_type.lower()}d successfully"
-    likes_count = Reaction.objects.filter(post=post, reaction_type="LIKE").count()
-    dislikes_count = Reaction.objects.filter(post=post, reaction_type="DISLIKE").count()
+        try:
+            Reaction.objects.create(
+                user=request.user,
+                post=post,
+                reaction_type=new_reaction_type,
+            )
+        except IntegrityError:
+            # A second request created this user's reaction at the same time.
+            existing_reaction = Reaction.objects.get(user=request.user, post=post)
+            if existing_reaction.reaction_type == new_reaction_type:
+                message = f"Post {new_reaction_type.lower()}d successfully"
+            else:
+                existing_reaction.reaction_type = new_reaction_type
+                existing_reaction.save(update_fields=["reaction_type"])
+                message = f"Reaction changed to {new_reaction_type}"
+        else:
+            message = f"Post {new_reaction_type.lower()}d successfully"
+
     return JsonResponse({
         "message": message,
-        "likes_count": likes_count,
-        "dislikes_count": dislikes_count
+        "likes_count": post.likes_count,
+        "dislikes_count": post.dislikes_count,
     }, status=200)
